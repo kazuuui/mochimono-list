@@ -179,6 +179,86 @@
   .add-btn:hover { background: #F7CA00; }
   .add-btn:active { background: #F0B800; box-shadow: none; }
 
+  /* ---- 持ち物セット（テンプレ・お気に入り） ---- */
+
+  .set-area {
+    margin: 12px 14px 0;
+    padding: 14px 16px 12px;
+    background: #fff;
+    border: 1px solid var(--az-line);
+    border-radius: 8px;
+  }
+
+  .set-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .set-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--az-text);
+    width: 66px;
+    flex-shrink: 0;
+    padding-top: 5px;
+  }
+
+  .set-chips { display: flex; gap: 7px; flex-wrap: wrap; flex: 1; min-width: 0; }
+
+  .set-btn {
+    font-size: 12px;
+    padding: 5px 12px;
+    border: 1px solid var(--az-line);
+    background: #fff;
+    border-radius: 18px;
+    cursor: pointer;
+    color: var(--az-link);
+    font-family: inherit;
+    transition: all 0.12s;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(15,17,17,.06);
+  }
+  .set-btn:hover { background: #FFF8E7; border-color: var(--az-orange); color: var(--az-text); }
+
+  /* お気に入りは削除ボタンとひとまとまりに見せる */
+  .fav-chip { display: inline-flex; align-items: center; }
+  .fav-chip .set-btn { border-radius: 18px 0 0 18px; border-right: none; }
+  .fav-del {
+    font-size: 12px;
+    padding: 5px 9px;
+    border: 1px solid var(--az-line);
+    border-radius: 0 18px 18px 0;
+    background: #fff;
+    color: #949494;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.12s;
+    box-shadow: 0 1px 2px rgba(15,17,17,.06);
+  }
+  .fav-del:hover { color: var(--az-price); background: #FDEDED; border-color: var(--az-price); }
+
+  .set-save-btn {
+    font-size: 12px;
+    padding: 5px 12px;
+    border: 1px solid var(--az-yellow-br);
+    background: var(--az-yellow);
+    border-radius: 18px;
+    cursor: pointer;
+    color: var(--az-text);
+    font-family: inherit;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(15,17,17,.1);
+    transition: background .1s;
+  }
+  .set-save-btn:hover { background: #F7CA00; }
+
+  .set-count { color: var(--az-sub); font-size: 11px; }
+  .set-empty { font-size: 12px; color: var(--az-sub); padding-top: 5px; }
+  .set-hint { font-size: 11px; color: var(--az-sub); margin-top: 2px; }
+
   /* ---- 絞込・並び替え ---- */
 
   .filter-bar, .sort-bar {
@@ -492,6 +572,23 @@
     </div>
   </div>
 
+  <div class="set-area">
+    <div class="form-title">持ち物セット</div>
+
+    <div class="set-row">
+      <span class="set-label">テンプレ</span>
+      <div class="set-chips" id="template-chips"></div>
+    </div>
+
+    <div class="set-row">
+      <span class="set-label">お気に入り</span>
+      <div class="set-chips" id="favorite-chips"></div>
+      <button class="set-save-btn" onclick="saveFavorite()">今のリストを保存</button>
+    </div>
+
+    <p class="set-hint">押すと不足している品目だけが追加されます。すでにある品目は重複しません。</p>
+  </div>
+
   <div class="filter-bar">
     <span class="filter-label">絞込：</span>
     <button class="filter-btn active" onclick="setFilter('全て',this)">全て</button>
@@ -543,6 +640,106 @@
   let editingId = null;
 
   const CATEGORIES = ['食料品','日用品','衣類','電化製品','趣味','その他'];
+
+  /* ---- 持ち物セットのテンプレ ----
+     [品目, カテゴリ, メモ] の順。金額と購入日は入れない
+     （まだ買っていない前提なので、使う人が埋める）。 */
+  const TEMPLATES = {
+    'キャンプ': [
+      ['テント', '趣味', ''],
+      ['シュラフ（寝袋）', '趣味', ''],
+      ['スリーピングマット', '趣味', ''],
+      ['ランタン', '趣味', ''],
+      ['ヘッドライト', '趣味', '予備電池も'],
+      ['焚き火台', '趣味', ''],
+      ['着火剤・ライター', '趣味', ''],
+      ['クッカー・食器', '趣味', ''],
+      ['カトラリー', '日用品', ''],
+      ['クーラーボックス', '趣味', ''],
+      ['折りたたみチェア', '趣味', ''],
+      ['折りたたみテーブル', '趣味', ''],
+      ['軍手', '日用品', '焚き火用'],
+      ['ゴミ袋', '日用品', ''],
+      ['救急セット', '日用品', ''],
+      ['モバイルバッテリー', '電化製品', ''],
+      ['虫除けスプレー', '日用品', ''],
+      ['タオル', '日用品', '']
+    ],
+    '海外旅行': [
+      ['パスポート', 'その他', '残存有効期間を確認'],
+      ['航空券（eチケット控え）', 'その他', ''],
+      ['海外旅行保険の証書', 'その他', ''],
+      ['クレジットカード', 'その他', '海外利用の可否を確認'],
+      ['現地通貨', 'その他', ''],
+      ['変換プラグ', '電化製品', '国ごとの形状を確認'],
+      ['モバイルバッテリー', '電化製品', '機内は手荷物へ'],
+      ['SIMカード / Wi-Fiルーター', '電化製品', ''],
+      ['常備薬', '日用品', ''],
+      ['歯ブラシセット', '日用品', ''],
+      ['洗面用具', '日用品', ''],
+      ['着替え', '衣類', ''],
+      ['上着', '衣類', ''],
+      ['スリッパ', '衣類', '機内・ホテル用'],
+      ['折りたたみ傘', '日用品', ''],
+      ['ネックピロー', '日用品', ''],
+      ['圧縮袋', '日用品', ''],
+      ['パスポートのコピー', 'その他', '原本と別に保管']
+    ],
+    '国内旅行': [
+      ['財布・現金', 'その他', ''],
+      ['身分証（免許証など）', 'その他', ''],
+      ['スマホ充電器', '電化製品', ''],
+      ['モバイルバッテリー', '電化製品', ''],
+      ['着替え', '衣類', ''],
+      ['洗面用具', '日用品', ''],
+      ['常備薬', '日用品', ''],
+      ['折りたたみ傘', '日用品', ''],
+      ['エコバッグ', '日用品', ''],
+      ['お土産用の袋', '日用品', ''],
+      ['移動中に読む本', '趣味', ''],
+      ['マスク', '日用品', '']
+    ],
+    '登山': [
+      ['登山靴', '衣類', ''],
+      ['ザック', '趣味', ''],
+      ['レインウェア（上下）', '衣類', '防水透湿のもの'],
+      ['防寒着', '衣類', '夏でも必須'],
+      ['ヘッドライト', '趣味', '予備電池も'],
+      ['地図・コンパス', 'その他', ''],
+      ['行動食', '食料品', ''],
+      ['水（1.5〜2L）', '食料品', ''],
+      ['ファーストエイドキット', '日用品', ''],
+      ['熊鈴', '趣味', ''],
+      ['手袋', '衣類', ''],
+      ['帽子', '衣類', ''],
+      ['サングラス', '衣類', ''],
+      ['日焼け止め', '日用品', ''],
+      ['ツェルト・緊急用シート', '趣味', ''],
+      ['モバイルバッテリー', '電化製品', ''],
+      ['ゴミ袋', '日用品', ''],
+      ['登山届', 'その他', '事前に提出']
+    ],
+    '夏フェス': [
+      ['チケット・リストバンド', 'その他', ''],
+      ['タオル', '日用品', ''],
+      ['帽子', '衣類', '熱中症対策'],
+      ['日焼け止め', '日用品', ''],
+      ['サングラス', '衣類', ''],
+      ['レインポンチョ', '衣類', '傘は使えない会場が多い'],
+      ['折りたたみチェア', '趣味', ''],
+      ['レジャーシート', '趣味', ''],
+      ['防水スマホケース', '電化製品', ''],
+      ['モバイルバッテリー', '電化製品', ''],
+      ['現金（小銭）', 'その他', ''],
+      ['塩分タブレット', '食料品', ''],
+      ['飲み物', '食料品', ''],
+      ['着替え', '衣類', ''],
+      ['サンダル・長靴', '衣類', ''],
+      ['ゴミ袋', '日用品', ''],
+      ['虫除け', '日用品', ''],
+      ['耳栓', '日用品', '']
+    ]
+  };
 
   /* 金額の読み取り。全角数字やカンマ、円記号が混ざっても拾う。
      日本語入力だと「１２３４」のように全角で入りやすく、
@@ -727,6 +924,109 @@
     if (e.key === 'Escape') cancelEdit();
   }
 
+  /* ---- 持ち物セット ---- */
+
+  const FAV_KEY = 'nb-favorites';
+
+  function loadFavorites() {
+    try {
+      const raw = localStorage.getItem(FAV_KEY);
+      if (!raw) return {};
+      const o = JSON.parse(raw);
+      return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {};
+    } catch (e) { return {}; }
+  }
+
+  function storeFavorites(favs) {
+    try { localStorage.setItem(FAV_KEY, JSON.stringify(favs)); }
+    catch (e) { alert('お気に入りを保存できませんでした。'); }
+  }
+
+  // 同じ品目を二重に増やさないよう、名前で突き合わせる
+  function addSet(entries, setName) {
+    const have = new Set(items.map(i => i.name.trim()));
+    const missing = entries.filter(e => !have.has(e[0].trim()));
+
+    if (missing.length === 0) {
+      alert(`「${setName}」の品目はすべて登録済みです。`);
+      return;
+    }
+    const skipped = entries.length - missing.length;
+    const msg = `「${setName}」から ${missing.length}件 を追加します。`
+      + (skipped > 0 ? `\n（${skipped}件はすでにあるので追加しません）` : '');
+    if (!confirm(msg)) return;
+
+    // 表示が元の並び順になるよう、末尾から積む
+    missing.slice().reverse().forEach(([name, cat, memo]) => {
+      items.unshift({
+        id: nextId++,
+        name,
+        date: '',
+        price: 0,
+        cat: CATEGORIES.includes(cat) ? cat : 'その他',
+        memo: memo || '',
+        bought: false
+      });
+    });
+    saveItems();
+    render();
+  }
+
+  function applyTemplate(key) {
+    const t = TEMPLATES[key];
+    if (t) addSet(t, key);
+  }
+
+  function applyFavorite(name) {
+    const favs = loadFavorites();
+    if (favs[name]) addSet(favs[name], name);
+  }
+
+  function saveFavorite() {
+    if (items.length === 0) {
+      alert('リストが空です。品目を追加してから保存してください。');
+      return;
+    }
+    const name = (prompt('お気に入りの名前を入力してください。', '') || '').trim();
+    if (!name) return;
+
+    const favs = loadFavorites();
+    if (favs[name] && !confirm(`「${name}」はすでにあります。上書きしますか？`)) return;
+
+    // 金額と購入日は持ち回らない（使い回す前提のため）
+    favs[name] = items.map(i => [i.name, i.cat, i.memo]);
+    storeFavorites(favs);
+    renderSets();
+    alert(`「${name}」に${items.length}件を保存しました。`);
+  }
+
+  function deleteFavorite(name) {
+    if (!confirm(`お気に入り「${name}」を削除しますか？\n（リストの品目は消えません）`)) return;
+    const favs = loadFavorites();
+    delete favs[name];
+    storeFavorites(favs);
+    renderSets();
+  }
+
+  function renderSets() {
+    document.getElementById('template-chips').innerHTML =
+      Object.keys(TEMPLATES).map(k =>
+        `<button class="set-btn" onclick="applyTemplate(${JSON.stringify(k).replace(/"/g, '&quot;')})">${esc(k)}<span class="set-count"> ${TEMPLATES[k].length}</span></button>`
+      ).join('');
+
+    const favs = loadFavorites();
+    const names = Object.keys(favs);
+    document.getElementById('favorite-chips').innerHTML = names.length === 0
+      ? '<span class="set-empty">まだありません。右のボタンで今のリストを保存できます。</span>'
+      : names.map(n => {
+          const j = JSON.stringify(n).replace(/"/g, '&quot;');
+          return `<span class="fav-chip">`
+            + `<button class="set-btn" onclick="applyFavorite(${j})">${esc(n)}<span class="set-count"> ${favs[n].length}</span></button>`
+            + `<button class="fav-del" onclick="deleteFavorite(${j})" title="削除">✕</button>`
+            + `</span>`;
+        }).join('');
+  }
+
   function setFilter(f, btn) {
     currentFilter = f;
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -901,6 +1201,7 @@
   importFromHash();
   loadItems();
   loadSort();
+  renderSets();
   render();
 </script>
 </body>
