@@ -521,6 +521,64 @@
     })[c]);
   }
 
+  /* ---- 保存（このブラウザ内に記録が残る） ---- */
+
+  const STORE_KEY = 'nb-items';
+  const NEXT_ID_KEY = 'nb-next-id';
+
+  function saveItems() {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(items));
+      localStorage.setItem(NEXT_ID_KEY, String(nextId));
+    } catch (e) {
+      // 保存領域がいっぱい、またはプライベートモードで書き込めない場合
+      console.warn('記録を保存できませんでした', e);
+    }
+  }
+
+  function loadItems() {
+    let raw;
+    try {
+      raw = localStorage.getItem(STORE_KEY);
+    } catch (e) {
+      return;
+    }
+    if (!raw) return;
+
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      console.warn('保存データを読めませんでした', e);
+      return;
+    }
+    if (!Array.isArray(parsed)) return;
+
+    // 壊れた項目が混ざっていても残りを活かす
+    items = parsed
+      .filter(i => i && typeof i === 'object' && typeof i.name === 'string' && i.name !== '')
+      .map(i => ({
+        id: Number(i.id) || 0,
+        name: i.name,
+        date: typeof i.date === 'string' ? i.date : '',
+        price: Number(i.price) || 0,
+        cat: CATEGORIES.includes(i.cat) ? i.cat : 'その他',
+        memo: typeof i.memo === 'string' ? i.memo : '',
+        bought: i.bought === true
+      }));
+
+    // id の重複や欠落を直しつつ、次の id を決める
+    const stored = parseInt(localStorage.getItem(NEXT_ID_KEY), 10);
+    let maxId = 0;
+    const seen = new Set();
+    items.forEach(i => {
+      if (i.id <= 0 || seen.has(i.id)) i.id = ++maxId;
+      seen.add(i.id);
+      if (i.id > maxId) maxId = i.id;
+    });
+    nextId = Math.max(stored > 0 ? stored : 0, maxId + 1);
+  }
+
   document.getElementById('inp-date').value = new Date().toISOString().slice(0,10);
 
   function activate(rowId, btn) {
@@ -569,18 +627,21 @@
     document.getElementById('inp-name').value = '';
     document.getElementById('inp-price').value = '';
     document.getElementById('inp-memo').value = '';
+    saveItems();
     render();
   }
 
   function toggleBought(id) {
     const item = items.find(i => i.id === id);
     if (item) item.bought = !item.bought;
+    saveItems();
     render();
   }
 
   function deleteItem(id) {
     items = items.filter(i => i.id !== id);
     if (editingId === id) editingId = null;
+    saveItems();
     render();
   }
 
@@ -607,6 +668,7 @@
     item.cat   = document.getElementById('edit-cat').value;
     item.memo  = document.getElementById('edit-memo').value.trim();
     editingId = null;
+    saveItems();
     render();
   }
 
@@ -692,6 +754,53 @@
     ).join('');
   }
 
+  /* ---- リンクからの取り込み（#import=... ） ----
+     他端末や旧バージョンからデータを移すための入口。
+     現在の内容を置き換えるため、必ず確認を挟む。 */
+  function importFromHash() {
+    const m = location.hash.match(/^#import=(.+)$/);
+    if (!m) return false;
+
+    // 取り込みの成否にかかわらず、URLから読み込み用の文字列は消す
+    const clearHash = () =>
+      history.replaceState(null, '', location.pathname + location.search);
+
+    let incoming;
+    try {
+      let b64 = m[1].replace(/-/g, '+').replace(/_/g, '/');
+      while (b64.length % 4) b64 += '=';   // 末尾のパディングが欠けていても読めるように
+      const bin = atob(b64);
+      const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+      incoming = JSON.parse(new TextDecoder().decode(bytes));
+    } catch (e) {
+      clearHash();
+      alert('取り込み用のデータを読み取れませんでした。');
+      return false;
+    }
+    if (!Array.isArray(incoming) || incoming.length === 0) {
+      clearHash();
+      return false;
+    }
+
+    const existing = (() => {
+      try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]').length; }
+      catch (e) { return 0; }
+    })();
+
+    const msg = existing > 0
+      ? `${incoming.length}件を取り込みます。\n現在保存されている${existing}件は置き換えられます。よろしいですか？`
+      : `${incoming.length}件を取り込みます。よろしいですか？`;
+
+    if (!confirm(msg)) { clearHash(); return false; }
+
+    localStorage.setItem(STORE_KEY, JSON.stringify(incoming));
+    localStorage.removeItem(NEXT_ID_KEY);
+    clearHash();
+    return true;
+  }
+
+  importFromHash();
+  loadItems();
   render();
 </script>
 </body>
