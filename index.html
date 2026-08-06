@@ -35,7 +35,113 @@
     --az-line2:     #E7E7E7;
     --az-text:      #0F1111;   /* 本文 */
     --az-sub:       #565959;   /* 補助テキスト */
+
+    /* 面と状態の色。ダークモードではこの塊だけを差し替える */
+    --az-card:          #ffffff;   /* カードの地 */
+    --az-hover:         #F7FAFA;   /* 行のホバー */
+    --az-done:          #FAFAFA;   /* 購入済みの行 */
+    --az-tint:          #FFF8E7;   /* 黄系の淡い面 */
+    --az-tint-blue:     #EDFDFF;   /* 青系の淡い面 */
+    --az-tint-red:      #FDEDED;   /* 赤系の淡い面 */
+    --az-focus:         #C8F3FA;   /* 入力欄のフォーカス輪 */
+    --az-line-hi:       #B8BDBD;   /* 濃いめの罫線 */
+    --az-field-border:  #888C8C;   /* 入力欄の枠 */
+    --az-header-border: #5A6A7A;   /* ヘッダー内のボタン枠 */
+    --az-muted:         #949494;   /* 薄い文字 */
+    --az-faint:         #8B8B8B;   /* さらに薄い文字 */
+    --az-shadow:        rgba(15,17,17,.08);
   }
+
+  /* ---- ダークモード ----
+     端末の設定に追従する。設定画面から手動で固定することもできる
+     （html[data-theme] が付いたときはそちらを優先）。 */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { color-scheme: dark; }
+
+  /* ダーク時に差し替える色。ライト側と同じ変数名を上書きするだけで全体に効く */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --az-navy:      #0D1117;
+      --az-navy2:     #161B22;
+      --az-link:      #6FD3E3;   /* 暗い地でも読める明るい青緑に */
+      --az-link-h:    #FFA07A;
+      --az-price:     #FF8A7A;   /* 赤は暗背景だと沈むので明るく */
+      --az-bg:        #0B0E11;
+      --az-line:      #2E3742;
+      --az-line2:     #232B33;
+      --az-text:      #E6E8EA;
+      --az-sub:       #A3ACB5;
+
+      --az-card:          #161B22;
+      --az-hover:         #1D242C;
+      --az-done:          #12171D;
+      --az-tint:          #2A2418;
+      --az-tint-blue:     #12303A;
+      --az-tint-red:      #3A1D1B;
+      --az-focus:         #1F4C58;
+      --az-line-hi:       #45505C;
+      --az-field-border:  #4A545F;
+      --az-header-border: #39434F;
+      --az-muted:         #7C868F;
+      --az-faint:         #6E7781;
+      --az-shadow:        rgba(0,0,0,.5);
+    }
+
+    /* カテゴリのタグ。淡い面のままだと眩しいので、暗い面＋明るい文字にする */
+    :root:not([data-theme="light"]) .cat-食料品   { background:#3A2416; color:#F3B48B; }
+    :root:not([data-theme="light"]) .cat-日用品   { background:#16301F; color:#8FD9AC; }
+    :root:not([data-theme="light"]) .cat-衣類     { background:#241E3A; color:#BCA9F0; }
+    :root:not([data-theme="light"]) .cat-電化製品 { background:#12283C; color:#8CC5EE; }
+    :root:not([data-theme="light"]) .cat-趣味     { background:#332A12; color:#E6C979; }
+    :root:not([data-theme="light"]) .cat-その他   { background:#242A30; color:#AEB6BE; }
+
+    /* 黄色いボタンは彩度が高すぎるので少し落とす */
+    :root:not([data-theme="light"]) .add-btn { background:#E8C22B; border-color:#D9B41F; color:#131921; }
+    :root:not([data-theme="light"]) .add-btn:hover { background:#F0CB3A; }
+    :root:not([data-theme="light"]) .set-save-btn { background:#E8C22B; border-color:#D9B41F; color:#131921; }
+    :root:not([data-theme="light"]) .set-save-btn:hover { background:#F0CB3A; }
+  }
+
+  /* 設定で「ダーク」を選んだとき（端末設定に関係なく固定） */
+  :root[data-theme="dark"] {
+    --az-navy:      #0D1117;
+    --az-navy2:     #161B22;
+    --az-link:      #6FD3E3;
+    --az-link-h:    #FFA07A;
+    --az-price:     #FF8A7A;
+    --az-bg:        #0B0E11;
+    --az-line:      #2E3742;
+    --az-line2:     #232B33;
+    --az-text:      #E6E8EA;
+    --az-sub:       #A3ACB5;
+
+    --az-card:          #161B22;
+    --az-hover:         #1D242C;
+    --az-done:          #12171D;
+    --az-tint:          #2A2418;
+    --az-tint-blue:     #12303A;
+    --az-tint-red:      #3A1D1B;
+    --az-focus:         #1F4C58;
+    --az-line-hi:       #45505C;
+    --az-field-border:  #4A545F;
+    --az-header-border: #39434F;
+    --az-muted:         #7C868F;
+    --az-faint:         #6E7781;
+    --az-shadow:        rgba(0,0,0,.5);
+  }
+  :root[data-theme="dark"] .cat-食料品   { background:#3A2416; color:#F3B48B; }
+  :root[data-theme="dark"] .cat-日用品   { background:#16301F; color:#8FD9AC; }
+  :root[data-theme="dark"] .cat-衣類     { background:#241E3A; color:#BCA9F0; }
+  :root[data-theme="dark"] .cat-電化製品 { background:#12283C; color:#8CC5EE; }
+  :root[data-theme="dark"] .cat-趣味     { background:#332A12; color:#E6C979; }
+  :root[data-theme="dark"] .cat-その他   { background:#242A30; color:#AEB6BE; }
+  :root[data-theme="dark"] .add-btn { background:#E8C22B; border-color:#D9B41F; color:#131921; }
+  :root[data-theme="dark"] .add-btn:hover { background:#F0CB3A; }
+  :root[data-theme="dark"] .set-save-btn { background:#E8C22B; border-color:#D9B41F; color:#131921; }
+  :root[data-theme="dark"] .set-save-btn:hover { background:#F0CB3A; }
+
 
   body {
     background: var(--az-bg);
@@ -90,7 +196,7 @@
   .size-btn {
     font-size: 11px;
     padding: 3px 9px;
-    border: 1px solid #5A6A7A;
+    border: 1px solid var(--az-header-border);
     background: transparent;
     border-radius: 4px;
     cursor: pointer;
@@ -104,6 +210,90 @@
     background: var(--az-orange);
     border-color: var(--az-orange);
     color: var(--az-navy);
+    font-weight: 700;
+  }
+
+
+  /* ---- ヘッダーの歯車 ---- */
+
+  .gear-btn {
+    width: 34px; height: 34px;
+    border: 1px solid var(--az-header-border);
+    background: transparent;
+    border-radius: 6px;
+    color: #DDD;
+    font-size: 17px;
+    line-height: 1;
+    cursor: pointer;
+    transition: all .12s;
+    flex-shrink: 0;
+  }
+  .gear-btn:hover { border-color: var(--az-orange); color: #fff; }
+
+  /* ---- 設定パネル ---- */
+
+  .modal-back {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 50;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 60px 16px 16px;
+  }
+  .modal-back.open { display: flex; }
+
+  .modal {
+    background: var(--az-card);
+    border: 1px solid var(--az-line);
+    border-radius: 10px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.35);
+    overflow: hidden;
+  }
+
+  .modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--az-navy);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .modal-close {
+    background: none; border: none; color: #CCC;
+    font-size: 15px; cursor: pointer; padding: 4px 6px; border-radius: 4px;
+    font-family: inherit;
+  }
+  .modal-close:hover { color: #fff; background: rgba(255,255,255,.12); }
+
+  .modal-body { padding: 16px; }
+
+  .setting { margin-bottom: 20px; }
+  .setting:last-child { margin-bottom: 4px; }
+  .setting-label { font-size: 13px; font-weight: 700; color: var(--az-text); margin-bottom: 8px; }
+  .setting-hint { font-size: 11px; color: var(--az-sub); margin-top: 7px; line-height: 1.6; }
+
+  .seg { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .seg-btn {
+    font-size: 12px;
+    padding: 6px 12px;
+    border: 1px solid var(--az-line);
+    background: var(--az-card);
+    border-radius: 18px;
+    cursor: pointer;
+    color: var(--az-link);
+    font-family: inherit;
+    transition: all .12s;
+    white-space: nowrap;
+  }
+  .seg-btn:hover { background: var(--az-hover); border-color: var(--az-line-hi); }
+  .seg-btn.active {
+    background: var(--az-navy);
+    border-color: var(--az-navy);
+    color: #fff;
     font-weight: 700;
   }
 
@@ -126,7 +316,7 @@
   .form-area {
     margin: 14px 14px 0;
     padding: 14px 16px 16px;
-    background: #fff;
+    background: var(--az-card);
     border: 1px solid var(--az-line);
     border-radius: 8px;
   }
@@ -145,9 +335,9 @@
   .field label { font-size: 12px; font-weight: 700; color: var(--az-text); }
 
   .field input, .field select {
-    border: 1px solid #888C8C;
+    border: 1px solid var(--az-field-border);
     border-radius: 4px;
-    background: #fff;
+    background: var(--az-card);
     padding: 7px 9px;
     font-size: 14px;
     font-family: inherit;
@@ -158,8 +348,8 @@
     transition: border-color .1s, box-shadow .1s;
   }
   .field input:focus, .field select:focus {
-    border-color: #007185;
-    box-shadow: 0 0 0 3px #C8F3FA;
+    border-color: var(--az-link);
+    box-shadow: 0 0 0 3px var(--az-focus);
   }
 
   /* Amazon の黄色いボタン */
@@ -184,7 +374,7 @@
   .set-area {
     margin: 12px 14px 0;
     padding: 14px 16px 12px;
-    background: #fff;
+    background: var(--az-card);
     border: 1px solid var(--az-line);
     border-radius: 8px;
   }
@@ -212,7 +402,7 @@
     font-size: 12px;
     padding: 5px 12px;
     border: 1px solid var(--az-line);
-    background: #fff;
+    background: var(--az-card);
     border-radius: 18px;
     cursor: pointer;
     color: var(--az-link);
@@ -221,7 +411,7 @@
     white-space: nowrap;
     box-shadow: 0 1px 2px rgba(15,17,17,.06);
   }
-  .set-btn:hover { background: #FFF8E7; border-color: var(--az-orange); color: var(--az-text); }
+  .set-btn:hover { background: var(--az-tint); border-color: var(--az-orange); color: var(--az-text); }
 
   /* お気に入りは削除ボタンとひとまとまりに見せる */
   .fav-chip { display: inline-flex; align-items: center; }
@@ -231,14 +421,14 @@
     padding: 5px 9px;
     border: 1px solid var(--az-line);
     border-radius: 0 18px 18px 0;
-    background: #fff;
-    color: #949494;
+    background: var(--az-card);
+    color: var(--az-muted);
     cursor: pointer;
     font-family: inherit;
     transition: all 0.12s;
     box-shadow: 0 1px 2px rgba(15,17,17,.06);
   }
-  .fav-del:hover { color: var(--az-price); background: #FDEDED; border-color: var(--az-price); }
+  .fav-del:hover { color: var(--az-price); background: var(--az-tint-red); border-color: var(--az-price); }
 
   .set-save-btn {
     font-size: 12px;
@@ -274,8 +464,8 @@
   .set-new-btn {
     font-size: 12px;
     padding: 5px 12px;
-    border: 1px dashed #B8BDBD;
-    background: #fff;
+    border: 1px dashed var(--az-line-hi);
+    background: var(--az-card);
     border-radius: 18px;
     cursor: pointer;
     color: var(--az-link);
@@ -283,7 +473,7 @@
     white-space: nowrap;
     transition: all .12s;
   }
-  .set-new-btn:hover { border-color: var(--az-orange); background: #FFF8E7; color: var(--az-text); }
+  .set-new-btn:hover { border-color: var(--az-orange); background: var(--az-tint); color: var(--az-text); }
 
   .set-count { color: var(--az-sub); font-size: 11px; }
   .set-empty { font-size: 12px; color: var(--az-sub); padding-top: 5px; }
@@ -307,7 +497,7 @@
     font-size: 12px;
     padding: 5px 12px;
     border: 1px solid var(--az-line);
-    background: #fff;
+    background: var(--az-card);
     border-radius: 18px;
     cursor: pointer;
     color: var(--az-link);
@@ -316,11 +506,11 @@
     white-space: nowrap;
     box-shadow: 0 1px 2px rgba(15,17,17,.06);
   }
-  .filter-btn:hover, .sort-btn:hover { background: #F7FAFA; border-color: #B8BDBD; }
+  .filter-btn:hover, .sort-btn:hover { background: var(--az-hover); border-color: var(--az-line-hi); }
 
   .filter-btn.active, .sort-btn.active {
-    background: #EDFDFF;
-    border-color: #007185;
+    background: var(--az-tint-blue);
+    border-color: var(--az-link);
     color: #0F1111;
     font-weight: 700;
     box-shadow: 0 0 0 1px #007185 inset;
@@ -340,7 +530,7 @@
     font-size: 12px;
     font-weight: 700;
     color: var(--az-sub);
-    background: #fff;
+    background: var(--az-card);
     border: 1px solid var(--az-line);
     border-bottom: none;
     border-radius: 8px 8px 0 0;
@@ -349,7 +539,7 @@
   .list-body {
     min-height: 320px;
     margin: 0 14px;
-    background: #fff;
+    background: var(--az-card);
     border: 1px solid var(--az-line);
     border-radius: 0 0 8px 8px;
   }
@@ -371,13 +561,13 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  .list-item:hover { background: #F7FAFA; }
-  .list-item.bought { background: #FAFAFA; }
-  .list-item.bought .item-name { text-decoration: line-through; color: #8B8B8B; }
+  .list-item:hover { background: var(--az-hover); }
+  .list-item.bought { background: var(--az-done); }
+  .list-item.bought .item-name { text-decoration: line-through; color: var(--az-faint); }
 
   .check-box {
     width: 18px; height: 18px;
-    border: 1px solid #888C8C;
+    border: 1px solid var(--az-field-border);
     border-radius: 3px;
     cursor: pointer;
     display: flex;
@@ -386,14 +576,14 @@
     font-size: 12px;
     transition: all 0.12s;
     color: transparent;
-    background: #fff;
+    background: var(--az-card);
     box-shadow: 0 1px 2px rgba(15,17,17,.08) inset;
     flex-shrink: 0;
   }
-  .check-box:hover { border-color: #007185; box-shadow: 0 0 0 3px #C8F3FA; }
+  .check-box:hover { border-color: var(--az-link); box-shadow: 0 0 0 3px var(--az-focus); }
   .check-box.checked {
     background: #007185;
-    border-color: #007185;
+    border-color: var(--az-link);
     color: #fff;
   }
 
@@ -417,7 +607,7 @@
     text-align: right;
     letter-spacing: -0.2px;
   }
-  .list-item.bought .item-price { color: #8B8B8B; }
+  .list-item.bought .item-price { color: var(--az-faint); }
 
   .item-memo { font-size: 12px; color: var(--az-sub); line-height: 1.4; }
 
@@ -425,7 +615,7 @@
     background: none;
     border: none;
     cursor: pointer;
-    color: #949494;
+    color: var(--az-muted);
     font-size: 14px;
     padding: 4px;
     border-radius: 4px;
@@ -433,20 +623,20 @@
     text-align: center;
     font-family: inherit;
   }
-  .edit-btn:hover { color: var(--az-link); background: #EDFDFF; }
-  .del-btn:hover { color: var(--az-price); background: #FDEDED; }
+  .edit-btn:hover { color: var(--az-link); background: var(--az-tint-blue); }
+  .del-btn:hover { color: var(--az-price); background: var(--az-tint-red); }
 
   /* ---- 編集中の行 ---- */
 
   .list-item.editing {
-    background: #FFF8E7;
+    background: var(--az-tint);
     box-shadow: inset 3px 0 0 var(--az-orange);
   }
 
   .edit-input {
-    border: 1px solid #888C8C;
+    border: 1px solid var(--az-field-border);
     border-radius: 4px;
-    background: #fff;
+    background: var(--az-card);
     padding: 5px 7px;
     font-size: 13px;
     font-family: inherit;
@@ -455,7 +645,7 @@
     width: 100%;
     min-width: 0;
   }
-  .edit-input:focus { border-color: #007185; box-shadow: 0 0 0 3px #C8F3FA; }
+  .edit-input:focus { border-color: var(--az-link); box-shadow: 0 0 0 3px var(--az-focus); }
   .edit-input.price { text-align: right; }
 
   /* ---- カテゴリのタグ ---- */
@@ -484,7 +674,7 @@
     gap: 12px;
     padding: 14px 18px;
     margin: 12px 14px 0;
-    background: #fff;
+    background: var(--az-card);
     border: 1px solid var(--az-line);
     border-radius: 8px;
   }
@@ -533,22 +723,7 @@
       <h1>持ち物・購入リスト</h1>
       <p>ITEM &amp; PURCHASE RECORD</p>
     </div>
-    <div class="size-ctrl">
-      <div class="size-row" id="width-row">
-        <span>幅</span>
-        <button class="size-btn" onclick="setWidth('560px',this)">狭</button>
-        <button class="size-btn active" onclick="setWidth('720px',this)">標準</button>
-        <button class="size-btn" onclick="setWidth('960px',this)">広</button>
-        <button class="size-btn" onclick="setWidth('100%',this)">全幅</button>
-      </div>
-      <div class="size-row" id="zoom-row">
-        <span>文字</span>
-        <button class="size-btn" onclick="setZoom('0.85',this)">小</button>
-        <button class="size-btn active" onclick="setZoom('1',this)">標準</button>
-        <button class="size-btn" onclick="setZoom('1.2',this)">大</button>
-        <button class="size-btn" onclick="setZoom('1.45',this)">特大</button>
-      </div>
-    </div>
+    <button class="gear-btn" onclick="openSettings()" aria-label="設定" title="設定">⚙</button>
   </div>
 
   <div class="stats-bar">
@@ -653,6 +828,47 @@
   <div class="total-row">
     <span class="total-label">表示中の合計</span>
     <span class="total-amount" id="filtered-total">¥0</span>
+  </div>
+</div>
+
+<div class="modal-back" id="settings-back" onclick="if(event.target===this) closeSettings()">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="設定">
+    <div class="modal-head">
+      <span>設定</span>
+      <button class="modal-close" onclick="closeSettings()" aria-label="閉じる">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="setting">
+        <div class="setting-label">テーマ</div>
+        <div class="seg" id="theme-row">
+          <button class="seg-btn" onclick="setTheme('auto',this)">端末に合わせる</button>
+          <button class="seg-btn" onclick="setTheme('light',this)">ライト</button>
+          <button class="seg-btn" onclick="setTheme('dark',this)">ダーク</button>
+        </div>
+        <p class="setting-hint">「端末に合わせる」にすると、Macやスマホのダークモード設定に自動で追従します。</p>
+      </div>
+
+      <div class="setting">
+        <div class="setting-label">表示幅</div>
+        <div class="seg" id="width-row">
+          <button class="seg-btn" onclick="setWidth('560px',this)">狭</button>
+          <button class="seg-btn" onclick="setWidth('720px',this)">標準</button>
+          <button class="seg-btn active" onclick="setWidth('1000px',this)">広</button>
+          <button class="seg-btn" onclick="setWidth('100%',this)">全幅</button>
+        </div>
+      </div>
+
+      <div class="setting">
+        <div class="setting-label">文字サイズ</div>
+        <div class="seg" id="zoom-row">
+          <button class="seg-btn" onclick="setZoom(0.9,this)">小</button>
+          <button class="seg-btn active" onclick="setZoom(1,this)">標準</button>
+          <button class="seg-btn" onclick="setZoom(1.15,this)">大</button>
+          <button class="seg-btn" onclick="setZoom(1.3,this)">特大</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -959,7 +1175,7 @@
   document.getElementById('inp-date').value = new Date().toISOString().slice(0,10);
 
   function activate(rowId, btn) {
-    document.querySelectorAll('#' + rowId + ' .size-btn')
+    document.querySelectorAll('#' + rowId + ' .seg-btn')
       .forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
   }
@@ -980,17 +1196,77 @@
     const w = localStorage.getItem('nb-width');
     const z = localStorage.getItem('nb-zoom');
     if (w) {
-      const btn = [...document.querySelectorAll('#width-row .size-btn')]
+      const btn = [...document.querySelectorAll('#width-row .seg-btn')]
         .find(b => b.getAttribute('onclick').includes("'" + w + "'"));
       if (btn) setWidth(w, btn);
     }
     if (z) {
-      const btn = [...document.querySelectorAll('#zoom-row .size-btn')]
-        .find(b => b.getAttribute('onclick').includes("'" + z + "'"));
+      // setZoom(1.15,this) のように引用符なしで書かれているため括弧ごと探す
+      const btn = [...document.querySelectorAll('#zoom-row .seg-btn')]
+        .find(b => b.getAttribute('onclick').includes('setZoom(' + z + ','));
       if (btn) setZoom(z, btn);
     }
   }
 
+  /* ---- テーマ（ダークモード） ----
+     'auto' は端末の設定に追従。'light'/'dark' は固定。
+     html の data-theme 属性で CSS 側を切り替える。 */
+
+  const THEME_KEY = 'nb-theme';
+
+  function applyTheme(mode) {
+    const root = document.documentElement;
+    if (mode === 'auto') root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', mode);
+
+    // スマホの上部バーの色も合わせる
+    const dark = mode === 'dark' ||
+      (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', dark ? '#0D1117' : '#131921');
+  }
+
+  function setTheme(mode, btn) {
+    applyTheme(mode);
+    try { localStorage.setItem(THEME_KEY, mode); } catch (e) {}
+    if (btn) activate('theme-row', btn);
+  }
+
+  function currentTheme() {
+    try {
+      const v = localStorage.getItem(THEME_KEY);
+      return (v === 'light' || v === 'dark') ? v : 'auto';
+    } catch (e) { return 'auto'; }
+  }
+
+  function restoreTheme() {
+    const mode = currentTheme();
+    applyTheme(mode);
+    const btn = [...document.querySelectorAll('#theme-row .seg-btn')]
+      .find(b => b.getAttribute('onclick').includes("'" + mode + "'"));
+    if (btn) activate('theme-row', btn);
+  }
+
+  // 端末の設定が変わったとき、'auto' なら追従する
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (currentTheme() === 'auto') applyTheme('auto');
+  });
+
+  /* ---- 設定パネル ---- */
+
+  function openSettings() {
+    document.getElementById('settings-back').classList.add('open');
+  }
+
+  function closeSettings() {
+    document.getElementById('settings-back').classList.remove('open');
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeSettings();
+  });
+
+  restoreTheme();
   restoreSize();
 
   function addItem() {
