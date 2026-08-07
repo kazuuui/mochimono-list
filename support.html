@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>サポート｜もちろぐ</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta name="theme-color" content="#131921">
+<meta name="description" content="持ち物・購入リストアプリ「もちろぐ」のサポートページ。使い方、よくある質問、お問い合わせ先。">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* 明るい面。アプリ本体と同じ Amazon 寄りの色を使う */
+  :root {
+    --navy:    #131921;
+    --line:    #D5D9D9;
+    --text:    #0F1111;
+    --sub:     #565959;
+    --link:    #007185;
+    --hover:   #C7511F;
+    --bg:      #EAEDED;
+    --card:    #FFFFFF;
+    --lead-bg: #F7FAFA;
+    --qa-bg:   #FAFAFA;
+  }
+
+  /* 端末がダークモードのとき。アプリ本体のダーク配色に合わせる */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --navy:    #0D1117;
+      --line:    #30363D;
+      --text:    #E6EDF3;
+      --sub:     #9198A1;
+      --link:    #56C7D6;
+      --hover:   #F0A868;
+      --bg:      #0B0E11;
+      --card:    #161B22;
+      --lead-bg: #12181F;
+      --qa-bg:   #12181F;
+    }
+  }
+
+  body {
+    background: var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial,
+                 "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+    color: var(--text);
+    line-height: 1.9;
+    padding: 0 0 60px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 18px 20px;
+  }
+  header .inner { max-width: 760px; margin: 0 auto; }
+  header h1 { font-size: 19px; font-weight: 700; }
+  header p { font-size: 12px; color: #CCC; margin-top: 2px; }
+
+  main {
+    max-width: 760px;
+    margin: 18px auto 0;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 28px 26px 32px;
+  }
+
+  h2 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 30px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--line);
+  }
+  h2:first-of-type { margin-top: 0; }
+
+  h3 {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 18px 0 6px;
+  }
+
+  p { font-size: 14px; margin-bottom: 12px; }
+  ul { margin: 0 0 12px 22px; font-size: 14px; }
+  li { margin-bottom: 6px; }
+
+  .lead {
+    font-size: 14px;
+    background: var(--lead-bg);
+    border-left: 3px solid var(--link);
+    padding: 12px 14px;
+    margin-bottom: 22px;
+  }
+
+  a { color: var(--link); }
+  a:hover { color: var(--hover); }
+
+  /* よくある質問。質問と答えのまとまりが目で追えるように面を敷く */
+  .qa {
+    background: var(--qa-bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 14px 16px 4px;
+    margin-bottom: 12px;
+  }
+  .qa .q {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .qa p:last-child { margin-bottom: 12px; }
+
+  /* 操作の一覧。記号と説明を揃えて読みやすくする */
+  table.ops {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+  table.ops th, table.ops td {
+    border: 1px solid var(--line);
+    padding: 7px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  table.ops th {
+    background: var(--lead-bg);
+    font-weight: 700;
+    white-space: nowrap;
+    width: 30%;
+  }
+
+  .contact {
+    background: var(--lead-bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 16px 18px;
+  }
+  .contact p:last-child { margin-bottom: 0; }
+
+  .updated {
+    font-size: 12px;
+    color: var(--sub);
+    margin-top: 28px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+
+  .back { display: inline-block; margin-top: 18px; font-size: 13px; }
+
+  @media (max-width: 600px) {
+    main { margin: 12px 12px 0; padding: 22px 18px 26px; border-radius: 6px; }
+    table.ops th { width: 38%; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="inner">
+    <h1>サポート</h1>
+    <p>もちろぐ（持ち物・購入リスト）</p>
+  </div>
+</header>
+
+<main>
+
+  <p class="lead">
+    「もちろぐ」のサポートページです。使い方とよくある質問をまとめています。
+    解決しない場合は、ページ下部の<a href="#contact">お問い合わせ</a>からご連絡ください。
+  </p>
+
+  <h2>1. もちろぐについて</h2>
+  <p>
+    旅行やキャンプの持ち物と、買ったものの記録をまとめて管理するリストアプリです。
+    用途ごとにリストを分けられるので、持ち物リストと購入履歴が混ざりません。
+    キャンプ／海外旅行／国内旅行／登山／夏フェスの持ち物テンプレを収録しています。
+  </p>
+  <p>
+    アカウント登録は不要です。入力した内容は端末内にのみ保存されます。
+  </p>
+
+  <h2>2. 使い方</h2>
+
+  <h3>iOSアプリ</h3>
+  <table class="ops">
+    <tr><th>品目を追加</th><td>右上の ＋ ボタン</td></tr>
+    <tr><th>編集</th><td>行をタップ、または行を右にスワイプ</td></tr>
+    <tr><th>削除</th><td>行を左にスワイプ</td></tr>
+    <tr><th>購入済にする</th><td>行の左端のチェックボックスをタップ</td></tr>
+    <tr><th>リストを切り替える</th><td>画面上部のタブをタップ</td></tr>
+    <tr><th>リストを追加</th><td>タブの右端「＋ 新しいリスト」</td></tr>
+  </table>
+
+  <h3>Web版</h3>
+  <table class="ops">
+    <tr><th>品目を追加</th><td>上部の「＋ 新規追加」に入力して「追加」</td></tr>
+    <tr><th>編集</th><td>行の ✎ ボタン</td></tr>
+    <tr><th>削除</th><td>行の ✕ ボタン</td></tr>
+    <tr><th>購入済にする</th><td>行の ✓ ボタン</td></tr>
+    <tr><th>リストを切り替える</th><td>「リスト」欄のタブをクリック</td></tr>
+    <tr><th>表示を変える</th><td>右上の ⚙ ボタン（テーマ・表示幅・文字サイズ）</td></tr>
+  </table>
+
+  <h3>並び替えと絞り込み</h3>
+  <p>
+    登録順・購入日・金額で並び替えられます。同じ項目をもう一度押すと、昇順と降順が入れ替わります。
+    「未購入」だけを表示すれば買い物リストとして、「購入済」だけならこれまでの購入履歴として使えます。
+    カテゴリでの絞り込みにも対応しています。
+  </p>
+
+  <h2>3. よくある質問</h2>
+
+  <div class="qa">
+    <p class="q">Q. 入力したデータはどこに保存されますか？</p>
+    <p>
+      すべてご利用の端末内にのみ保存されます。iOSアプリは端末内のアプリ領域に、
+      Web版はブラウザのlocalStorageに保存します。
+      開発者のサーバーに送信されることはなく、開発者が内容を見ることもできません。
+    </p>
+  </div>
+
+  <div class="qa">
+    <p class="q">Q. 機種変更したらデータを引き継げますか？</p>
+    <p>
+      申し訳ありませんが、現在のバージョンでは端末間の引き継ぎ機能はありません。
+      データは端末ごとに保存されるため、別の端末には自動では移りません。
+    </p>
+    <p>
+      同じ理由で、<strong>アプリを削除するとデータは失われ、復元できません。</strong>
+      Web版でブラウザのデータ（サイトデータ・キャッシュ）を消去した場合も同様です。
+      大切な記録がある場合は、あらかじめスクリーンショットなどでの控えをおすすめします。
+    </p>
+  </div>
+
+  <div class="qa">
+    <p class="q">Q. 品目やリストを間違えて削除してしまいました。</p>
+    <p>
+      削除の取り消しには対応していません。もう一度入力し直してください。
+    </p>
+  </div>
+
+  <div class="qa">
+    <p class="q">Q. テンプレの中身は変更できますか？</p>
+    <p>
+      できます。テンプレのリストを開いたあとは、通常のリストと同じように品目の追加・編集・削除ができ、
+      次に開いたときも編集した状態が残ります。
+    </p>
+    <p>
+      自分用に整えたリストは「このリストを複製」で複製できるので、
+      元のリストを残したまま、次の旅行用に使い回せます。
+    </p>
+  </div>
+
+  <div class="qa">
+    <p class="q">Q. 合計金額はどのように計算されますか？</p>
+    <p>
+      画面上部に表示される合計は、<strong>購入済にした品目の金額の合計</strong>です。
+      まだ購入していない品目の金額は含みません。
+    </p>
+  </div>
+
+  <div class="qa">
+    <p class="q">Q. 金額を全角の数字で入力しても大丈夫ですか？</p>
+    <p>
+      大丈夫です。全角で入力された数字は半角に変換して扱います。
+      「1,200円」のように記号や単位が混ざっていても、数字の部分だけを金額として読み取ります。
+    </p>
+  </div>
+
+  <div class="qa">
+    <p class="q">Q. ダークモードにできますか？</p>
+    <p>
+      Web版は、端末のダークモード設定に自動で追従します。
+      右上の ⚙ ボタンから「ライト」「ダーク」を選んで固定することもできます。
+    </p>
+  </div>
+
+  <div class="qa">
+    <p class="q">Q. 広告は表示されますか？ アカウント登録は必要ですか？</p>
+    <p>
+      どちらもありません。広告の表示、利用状況の収集、アカウント登録の仕組みは組み込んでいません。
+    </p>
+  </div>
+
+  <h2>4. 動作環境</h2>
+  <ul>
+    <li>iOSアプリ：iOS 17 以降のiPhone・iPad</li>
+    <li>Web版：Safari、Chrome、Edge、Firefox の最新版</li>
+  </ul>
+
+  <h2 id="contact">5. お問い合わせ</h2>
+  <div class="contact">
+    <p>
+      不具合のご報告、ご要望、その他のお問い合わせは、以下からお願いします。
+      いただいた内容は開発者が確認し、順次対応します。
+    </p>
+    <ul>
+      <li>
+        <a href="https://github.com/kazuuui/mochimono-list/issues/new" target="_blank" rel="noopener">
+          お問い合わせフォーム（GitHub Issues）を開く</a>
+        ※ GitHubアカウントが必要です
+      </li>
+    </ul>
+    <p>
+      不具合のご報告の際は、次の内容を書き添えていただけると調査がはやくなります。
+    </p>
+    <ul>
+      <li>ご利用の端末（例：iPhone 15、iPadOS 18、Mac の Safari）</li>
+      <li>iOSアプリか、Web版か</li>
+      <li>どの操作をしたときに起きたか</li>
+    </ul>
+  </div>
+
+  <h2>6. プライバシーについて</h2>
+  <p>
+    もちろぐは個人情報を収集しません。詳しくは
+    <a href="privacy.html">プライバシーポリシー</a>をご覧ください。
+  </p>
+
+  <p class="updated">最終更新日：2026年8月8日</p>
+
+  <a class="back" href="./">← もちろぐに戻る</a>
+
+</main>
+
+</body>
+</html>
