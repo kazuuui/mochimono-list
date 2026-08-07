@@ -5,20 +5,39 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>プライバシーポリシー｜もちろぐ</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<meta name="theme-color" content="#1a2744">
+<meta name="theme-color" content="#131921">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --navy: #131921;
-    --line: #D5D9D9;
-    --text: #0F1111;
-    --sub:  #565959;
-    --link: #007185;
+    --navy:    #131921;
+    --line:    #D5D9D9;
+    --text:    #0F1111;
+    --sub:     #565959;
+    --link:    #007185;
+    --hover:   #C7511F;
+    --bg:      #EAEDED;
+    --card:    #FFFFFF;
+    --lead-bg: #F7FAFA;
+  }
+
+  /* 端末がダークモードのとき。アプリ本体のダーク配色に合わせる */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --navy:    #0D1117;
+      --line:    #30363D;
+      --text:    #E6EDF3;
+      --sub:     #9198A1;
+      --link:    #56C7D6;
+      --hover:   #F0A868;
+      --bg:      #0B0E11;
+      --card:    #161B22;
+      --lead-bg: #12181F;
+    }
   }
 
   body {
-    background: #EAEDED;
+    background: var(--bg);
     font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial,
                  "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
     color: var(--text);
@@ -39,7 +58,7 @@
   main {
     max-width: 760px;
     margin: 18px auto 0;
-    background: #fff;
+    background: var(--card);
     border: 1px solid var(--line);
     border-radius: 8px;
     padding: 28px 26px 32px;
@@ -60,14 +79,14 @@
 
   .lead {
     font-size: 14px;
-    background: #F7FAFA;
+    background: var(--lead-bg);
     border-left: 3px solid var(--link);
     padding: 12px 14px;
     margin-bottom: 22px;
   }
 
   a { color: var(--link); }
-  a:hover { color: #C7511F; }
+  a:hover { color: var(--hover); }
 
   .updated {
     font-size: 12px;
@@ -179,6 +198,7 @@
     本ポリシーまたは本アプリについてのご質問は、以下からお願いします。
   </p>
   <ul>
+    <li><a href="support.html">サポートページ</a>（使い方・よくある質問・お問い合わせ先）</li>
     <li><a href="https://github.com/kazuuui/mochimono-list/issues" target="_blank" rel="noopener">GitHub リポジトリの Issues</a></li>
   </ul>
 
