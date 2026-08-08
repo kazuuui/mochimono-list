@@ -297,6 +297,45 @@
     font-weight: 700;
   }
 
+  /* ---- 自動バックアップの一覧 ----
+     保存のたびに控えを取り、ここから以前の状態へ戻せるようにする。 */
+
+  .snap-list { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
+
+  .snap-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    padding: 6px 8px;
+    border: 1px solid var(--az-line);
+    border-radius: 6px;
+    background: var(--az-card);
+  }
+  .snap-when { font-weight: 700; white-space: nowrap; }
+  .snap-what { color: var(--az-sub); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .snap-tag {
+    font-size: 10px;
+    color: var(--az-sub);
+    border: 1px solid var(--az-line);
+    border-radius: 8px;
+    padding: 0 6px;
+    flex-shrink: 0;
+  }
+  .snap-btn {
+    font-size: 11px;
+    padding: 4px 10px;
+    border: 1px solid var(--az-line);
+    border-radius: 14px;
+    background: var(--az-card);
+    color: var(--az-link);
+    cursor: pointer;
+    font-family: inherit;
+    flex-shrink: 0;
+  }
+  .snap-btn:hover { background: var(--az-tint); border-color: var(--az-orange); color: var(--az-text); }
+  .snap-empty { font-size: 11px; color: var(--az-sub); }
+
   /* 設定パネル最下部の案内。区切り線を引いて、操作項目と混ざらないようにする */
   .setting-links {
     border-top: 1px solid var(--az-line);
@@ -1025,6 +1064,12 @@
         </div>
       </div>
 
+      <div class="setting">
+        <div class="setting-label">自動バックアップ</div>
+        <div class="snap-list" id="snap-list"></div>
+        <p class="setting-hint">保存のたびに控えを自動で取っています。「戻す」を押すと、その時点の内容に置き換わります（戻す直前の状態も控えを取るので、やり直せます）。</p>
+      </div>
+
       <div class="setting-links">
         <a href="support.html">サポート（使い方・よくある質問・お問い合わせ）<span class="arrow">↗</span></a>
         <a href="privacy.html">プライバシーポリシー<span class="arrow">↗</span></a>
@@ -1190,6 +1235,140 @@
       // 保存領域がいっぱい、またはプライベートモードで書き込めない場合
       console.warn('記録を保存できませんでした', e);
     }
+    takeSnapshot();
+  }
+
+  /* ---- 自動バックアップ ----
+     保存のたびに、そのときの全リストの控えを別キーへ取る。
+     nb-items が消えても控えは残るので、設定画面から戻せる。
+     直近5世代と、過去7日ぶんの各日1世代を残す。 */
+
+  const SNAP_KEY = 'nb-snapshots';
+  const SNAP_RECENT = 5;    // 直近で必ず残す数
+  const SNAP_DAYS   = 7;    // 日ごとに残す日数
+
+  function loadSnapshots() {
+    try {
+      const a = JSON.parse(localStorage.getItem(SNAP_KEY) || '[]');
+      return Array.isArray(a) ? a.filter(s => s && typeof s.t === 'number') : [];
+    } catch (e) { return []; }
+  }
+
+  // いま保存されている中身をそのまま写し取る（画面の状態ではなく保存済みの値を見る）
+  function currentSnapshotBody() {
+    const get = (k, d) => {
+      try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); }
+      catch (e) { return d; }
+    };
+    return {
+      items:   get(STORE_KEY, []),
+      lists:   get(LISTS_KEY, {}),
+      folders: get(FOLDERS_KEY, []),
+      parents: get(PARENT_KEY, {})
+    };
+  }
+
+  function snapshotCounts(b) {
+    const listCounts = Object.entries(b.lists || {})
+      .map(([n, a]) => `${n} ${Array.isArray(a) ? a.length : 0}`);
+    return { my: (b.items || []).length, lists: listCounts };
+  }
+
+  function dayKey(t) {
+    const d = new Date(t);
+    return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  }
+
+  /* 直近 SNAP_RECENT 件は無条件で残し、それ以外は「その日の最新1件」だけ残す。
+     さらに古い日は捨てる。 */
+  function pruneSnapshots(list) {
+    list.sort((a, b) => b.t - a.t);
+    const keep = new Set(list.slice(0, SNAP_RECENT));
+    const seenDay = new Set();
+    const limit = Date.now() - SNAP_DAYS * 86400000;
+    for (const s of list) {
+      if (s.t < limit) continue;
+      const k = dayKey(s.t);
+      if (!seenDay.has(k)) { seenDay.add(k); keep.add(s); }
+    }
+    return list.filter(s => keep.has(s));
+  }
+
+  function takeSnapshot(tag) {
+    let body;
+    try { body = currentSnapshotBody(); } catch (e) { return; }
+    const sig = JSON.stringify(body);
+    const list = loadSnapshots();
+    // 中身が前回と同じなら増やさない。
+    // ただし「戻す前」などの印がほしいときは、その控えに印だけ付け替える。
+    if (list.length && list[0] && list[0].sig === sig) {
+      if (tag && list[0].tag !== tag) {
+        list[0].tag = tag;
+        try { localStorage.setItem(SNAP_KEY, JSON.stringify(list)); } catch (e) {}
+      }
+      return;
+    }
+
+    list.unshift({ t: Date.now(), sig, tag: tag || '自動', body });
+    let kept = pruneSnapshots(list);
+    // 保存領域が足りなければ、古いものから諦める
+    for (let i = 0; i < 12; i++) {
+      try { localStorage.setItem(SNAP_KEY, JSON.stringify(kept)); return; }
+      catch (e) { if (kept.length <= 1) return; kept = kept.slice(0, kept.length - 1); }
+    }
+  }
+
+  function fmtWhen(t) {
+    const d = new Date(t), n = new Date();
+    const hm = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    if (dayKey(t) === dayKey(n.getTime())) return `今日 ${hm}`;
+    if (dayKey(t) === dayKey(n.getTime() - 86400000)) return `昨日 ${hm}`;
+    return `${d.getMonth() + 1}/${d.getDate()} ${hm}`;
+  }
+
+  function renderSnapshots() {
+    const box = document.getElementById('snap-list');
+    if (!box) return;
+    const list = loadSnapshots();
+    if (!list.length) {
+      box.innerHTML = '<span class="snap-empty">まだ控えはありません。品目を追加・編集すると自動で取られます。</span>';
+      return;
+    }
+    box.innerHTML = list.map(s => {
+      const c = snapshotCounts(s.body || {});
+      const detail = [`マイリスト ${c.my}`].concat(c.lists).join('／');
+      return `<div class="snap-row">`
+        + `<span class="snap-when">${esc(fmtWhen(s.t))}</span>`
+        + `<span class="snap-tag">${esc(s.tag || '自動')}</span>`
+        + `<span class="snap-what" title="${esc(detail)}">${esc(detail)}</span>`
+        + `<button class="snap-btn" onclick="restoreSnapshot(${s.t})">戻す</button>`
+        + `</div>`;
+    }).join('');
+  }
+
+  function restoreSnapshot(t) {
+    const s = loadSnapshots().find(x => x.t === t);
+    if (!s || !s.body) { alert('その控えが見つかりませんでした。'); return; }
+    const c = snapshotCounts(s.body);
+    if (!confirm(`${fmtWhen(t)} の状態に戻します。\nマイリスト ${c.my}件${c.lists.length ? '／' + c.lists.join('／') : ''}\n\n` +
+                 `いまの内容は置き換えられます。よろしいですか？`)) return;
+
+    // 戻す前のいまの状態も控えておく。戻した操作自体をやり直せるようにする
+    takeSnapshot('戻す前');
+
+    try {
+      localStorage.setItem(STORE_KEY,   JSON.stringify(s.body.items   || []));
+      localStorage.setItem(LISTS_KEY,   JSON.stringify(s.body.lists   || {}));
+      localStorage.setItem(FOLDERS_KEY, JSON.stringify(s.body.folders || []));
+      localStorage.setItem(PARENT_KEY,  JSON.stringify(s.body.parents || {}));
+      localStorage.removeItem(NEXT_ID_KEY);
+    } catch (e) {
+      alert('復元を保存できませんでした。');
+      return;
+    }
+    switchList(DEFAULT_LIST);
+    renderSnapshots();
+    alert(`${fmtWhen(t)} の状態に戻しました。`);
   }
 
   /* ---- リストの切り替え ----
@@ -1212,6 +1391,7 @@
   function storeLists(lists) {
     try { localStorage.setItem(LISTS_KEY, JSON.stringify(lists)); }
     catch (e) { alert('リストを保存できませんでした。'); }
+    takeSnapshot();
   }
 
   // 保存形式のばらつきを吸収して items に入る形へ揃える
@@ -1347,6 +1527,7 @@
   function storeFolders(folders) {
     try { localStorage.setItem(FOLDERS_KEY, JSON.stringify(folders)); }
     catch (e) { alert('フォルダを保存できませんでした。'); }
+    takeSnapshot();
   }
 
   // { リスト名: フォルダ名 }。入っていないリストは未分類。
@@ -1360,6 +1541,7 @@
   function storeParents(parents) {
     try { localStorage.setItem(PARENT_KEY, JSON.stringify(parents)); }
     catch (e) { alert('フォルダを保存できませんでした。'); }
+    takeSnapshot();
   }
 
   function createFolder() {
@@ -1525,6 +1707,7 @@
   /* ---- 設定パネル ---- */
 
   function openSettings() {
+    renderSnapshots();
     document.getElementById('settings-back').classList.add('open');
   }
 
@@ -1965,6 +2148,8 @@
   importFromHash();
   loadSort();
   loadHideChildren();
+  // 一度も編集していない人にも控えが1つはある状態にしておく
+  takeSnapshot('起動時');
 
   // 前回開いていたリストを復元する（消えていればマイリストへ）
   let startList = DEFAULT_LIST;
