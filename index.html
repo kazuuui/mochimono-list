@@ -671,8 +671,59 @@
     color: var(--az-link);
     line-height: 1.4;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    /* 列が狭いときは、バッジや＋を下へ逃がして品目名を潰さない */
+    flex-wrap: wrap;
   }
   .item-name:hover { color: var(--az-link-h); text-decoration: underline; }
+  .item-name .name-text { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+
+  /* ---- アイテムの親子 ----
+     子は品目名を下げて、親のすぐ下にぶら下げる。 */
+
+  .list-item.child { background: var(--az-tint); }
+  .list-item.child:hover { background: var(--az-hover); }
+  .list-item.child .item-name { padding-left: 18px; }
+  .child-mark { color: var(--az-muted); font-size: 12px; flex-shrink: 0; }
+
+  /* 親に「子の何件が購入済か」を出す。折りたたんでいても進み具合が分かる */
+  .child-count {
+    font-size: 11px;
+    color: var(--az-sub);
+    background: var(--az-tint);
+    border: 1px solid var(--az-line);
+    border-radius: 9px;
+    padding: 1px 7px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .sub-btn {
+    font-size: 12px;
+    line-height: 1;
+    padding: 2px 6px;
+    border: 1px dashed var(--az-line-hi);
+    border-radius: 9px;
+    background: none;
+    color: var(--az-sub);
+    cursor: pointer;
+    font-family: inherit;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity .12s;
+  }
+  .list-item:hover .sub-btn, .sub-btn:focus { opacity: 1; }
+  .sub-btn:hover { color: var(--az-link); border-color: var(--az-link); }
+  /* スマホなどホバーがない端末では、出しっぱなしにしないと押せない */
+  @media (hover: none) { .sub-btn { opacity: 1; } }
+
+  /* 編集中だけ「親」の選択欄を1列足す */
+  .list-item.editing {
+    grid-template-columns: 40px 96px 2.2fr 96px 96px 1fr 118px 34px 34px;
+  }
 
   .item-cat { font-size: 12px; }
 
@@ -1151,7 +1202,8 @@
         price: Number(i.price) || 0,
         cat: CATEGORIES.includes(i.cat) ? i.cat : 'その他',
         memo: typeof i.memo === 'string' ? i.memo : '',
-        bought: i.bought === true
+        bought: i.bought === true,
+        parentId: Number(i.parentId) || 0
       }));
     let maxId = 0;
     const seen = new Set();
@@ -1159,6 +1211,18 @@
       if (i.id <= 0 || seen.has(i.id)) i.id = ++maxId;
       seen.add(i.id);
       if (i.id > maxId) maxId = i.id;
+    });
+
+    /* 親子は1段だけ。壊れた指定（自分自身・存在しない親・孫）は最上位に戻す。
+       これがないと、描画のときに行が消えたり無限に潜ったりする。 */
+    const byId = new Map(list.map(i => [i.id, i]));
+    list.forEach(i => {
+      const p = byId.get(i.parentId);
+      if (!p || p.id === i.id) i.parentId = 0;
+    });
+    list.forEach(i => {
+      const p = byId.get(i.parentId);
+      if (p && p.parentId) i.parentId = p.parentId;   // 孫は親の親へ引き上げる
     });
     return list;
   }
@@ -1182,7 +1246,7 @@
         let id = 1;
         items = TEMPLATES[name].map(([n, c, m]) => ({
           id: id++, name: n, date: '', price: 0,
-          cat: CATEGORIES.includes(c) ? c : 'その他', memo: m || '', bought: false
+          cat: CATEGORIES.includes(c) ? c : 'その他', memo: m || '', bought: false, parentId: 0
         }));
         lists[name] = items;
         storeLists(lists);
@@ -1215,9 +1279,12 @@
     if (name === DEFAULT_LIST) { alert('その名前は使えません。'); return; }
     const lists = loadLists();
     if (lists[name] && !confirm(`「${name}」を上書きしますか？`)) return;
-    // 金額と購入日は引き継がない（使い回す前提のため）
+    // 金額と購入日は引き継がない（使い回す前提のため）。
+    // IDを振り直すので、親子の指定も新しいIDへ読み替える。
+    const newId = new Map(items.map((i, n) => [i.id, n + 1]));
     lists[name] = items.map((i, n) => ({
-      id: n + 1, name: i.name, date: '', price: 0, cat: i.cat, memo: i.memo, bought: false
+      id: n + 1, name: i.name, date: '', price: 0, cat: i.cat, memo: i.memo, bought: false,
+      parentId: i.parentId ? (newId.get(i.parentId) || 0) : 0
     }));
     storeLists(lists);
     switchList(name);
@@ -1455,7 +1522,7 @@
     const cat   = document.getElementById('inp-cat').value;
     const memo  = document.getElementById('inp-memo').value.trim();
     if (!name) { document.getElementById('inp-name').focus(); return; }
-    items.unshift({ id: nextId++, name, date, price, cat, memo, bought: false });
+    items.unshift({ id: nextId++, name, date, price, cat, memo, bought: false, parentId: 0 });
     document.getElementById('inp-name').value = '';
     document.getElementById('inp-price').value = '';
     document.getElementById('inp-memo').value = '';
@@ -1471,8 +1538,37 @@
   }
 
   function deleteItem(id) {
-    items = items.filter(i => i.id !== id);
+    // 親を消すときは、ぶら下がっている子も一緒に消える。先に断っておく。
+    const kids = childrenOf(id);
+    if (kids.length) {
+      const item = items.find(i => i.id === id);
+      if (!confirm(`「${item ? item.name : ''}」の下の${kids.length}件も一緒に削除されます。よろしいですか？`)) return;
+    }
+    items = items.filter(i => i.id !== id && i.parentId !== id);
     if (editingId === id) editingId = null;
+    saveItems();
+    render();
+  }
+
+  /* ---- アイテムの親子 ----
+     親子は1段だけ。子はさらに子を持たない。
+     金額と購入済は親子それぞれが独立して持つ（親を押しても子は変わらない）。 */
+
+  function childrenOf(id) {
+    return items.filter(i => i.parentId === id);
+  }
+
+  function addChild(parentId) {
+    const parent = items.find(i => i.id === parentId);
+    if (!parent) return;
+    const name = (prompt(`「${parent.name}」の下に追加する品目名を入力してください。`, '') || '').trim();
+    if (!name) return;
+    // 親のすぐ後ろに置く。登録順で並べたとき親子が離れないようにする。
+    const at = items.findIndex(i => i.id === parentId);
+    items.splice(at + 1, 0, {
+      id: nextId++, name, date: '', price: 0,
+      cat: parent.cat, memo: '', bought: false, parentId
+    });
     saveItems();
     render();
   }
@@ -1499,6 +1595,19 @@
     item.price = parsePrice(document.getElementById('edit-price').value);
     item.cat   = document.getElementById('edit-cat').value;
     item.memo  = document.getElementById('edit-memo').value.trim();
+
+    // 親の付け替え。子を持つ項目は、孫ができてしまうので子にできない。
+    const sel = document.getElementById('edit-parent');
+    if (sel) {
+      const to = Number(sel.value) || 0;
+      item.parentId = (to && to !== item.id && !childrenOf(item.id).length) ? to : 0;
+      // 親の直後へ移し、登録順でも親子が並ぶようにする
+      if (item.parentId) {
+        items = items.filter(i => i.id !== item.id);
+        const at = items.findIndex(i => i.id === item.parentId);
+        items.splice(at + 1, 0, item);
+      }
+    }
     editingId = null;
     saveItems();
     render();
@@ -1666,11 +1775,20 @@
   }
 
   function viewRow(item) {
+    const isChild = !!item.parentId;
+    const kids = isChild ? [] : childrenOf(item.id);
+    // 子の進み具合。親を見ただけで残りが分かるようにする
+    const badge = kids.length
+      ? `<span class="child-count" title="この下の購入済／全件">${kids.filter(k => k.bought).length}/${kids.length}</span>`
+      : '';
+    // 子はさらに子を持てないので、＋は最上位の行にだけ出す
+    const addBtn = isChild ? ''
+      : `<button class="sub-btn" onclick="event.stopPropagation();addChild(${item.id})" title="この下に品目を追加">＋</button>`;
     return `
-      <div class="list-item ${item.bought ? 'bought' : ''}">
+      <div class="list-item ${item.bought ? 'bought' : ''}${isChild ? ' child' : ''}">
         <div class="check-box ${item.bought ? 'checked' : ''}" onclick="toggleBought(${item.id})">✓</div>
         <span class="item-date">${fmtDate(item.date)}</span>
-        <span class="item-name">${esc(item.name)}</span>
+        <span class="item-name">${isChild ? '<span class="child-mark">└</span>' : ''}<span class="name-text">${esc(item.name)}</span>${badge}${addBtn}</span>
         <span class="item-cat"><span class="cat-tag cat-${esc(item.cat)}">${esc(item.cat)}</span></span>
         <span class="item-price">${fmtPrice(item.price)}</span>
         <span class="item-memo">${item.memo ? esc(item.memo) : '—'}</span>
@@ -1684,6 +1802,16 @@
     const opts = CATEGORIES.map(c =>
       `<option${c === item.cat ? ' selected' : ''}>${c}</option>`
     ).join('');
+
+    // 親にできるのは最上位の項目だけ。自分自身と、子を持つ項目は除く。
+    const hasKids = childrenOf(item.id).length > 0;
+    const parentOpts = hasKids
+      ? `<option value="0">最上位（子あり）</option>`
+      : `<option value="0"${item.parentId ? '' : ' selected'}>最上位</option>`
+        + items
+            .filter(i => !i.parentId && i.id !== item.id)
+            .map(i => `<option value="${i.id}"${i.id === item.parentId ? ' selected' : ''}>└ ${esc(i.name)}</option>`)
+            .join('');
     return `
       <div class="list-item editing" onkeydown="editKey(event, ${item.id})">
         <div class="check-box ${item.bought ? 'checked' : ''}" onclick="toggleBought(${item.id})">✓</div>
@@ -1692,6 +1820,7 @@
         <select class="edit-input" id="edit-cat">${opts}</select>
         <input class="edit-input price" id="edit-price" type="text" inputmode="numeric" value="${item.price || ''}" placeholder="0">
         <input class="edit-input" id="edit-memo" type="text" value="${esc(item.memo)}" placeholder="メモ">
+        <select class="edit-input" id="edit-parent" title="どの項目の下に置くか"${hasKids ? ' disabled' : ''}>${parentOpts}</select>
         <button class="edit-btn save-btn" onclick="saveEdit(${item.id})" title="保存">✓</button>
         <button class="del-btn" onclick="cancelEdit()" title="キャンセル">✕</button>
       </div>
@@ -1699,23 +1828,30 @@
   }
 
   function render() {
-    const list = sorted(filtered());
     applySortLabels();
     const body = document.getElementById('list-body');
+    const hit = new Set(filtered().map(i => i.id));
+
     document.getElementById('total-count').textContent = items.length;
     document.getElementById('bought-count').textContent = items.filter(i=>i.bought).length;
     const totalAmt = items.filter(i=>i.bought).reduce((s,i)=>s+i.price,0);
     document.getElementById('total-amount').textContent = '¥' + totalAmt.toLocaleString();
-    const filteredAmt = list.reduce((s,i)=>s+i.price,0);
+    // 合計は「絞込に該当した項目」だけ。文脈で出す親は数えない。
+    const filteredAmt = items.filter(i => hit.has(i.id)).reduce((s,i)=>s+i.price,0);
     document.getElementById('filtered-total').textContent = '¥' + filteredAmt.toLocaleString();
 
-    if (list.length === 0) {
+    // 子だけが該当したときは、宙に浮かないよう親も一緒に出す
+    const tops = sorted(items.filter(i =>
+      !i.parentId && (hit.has(i.id) || childrenOf(i.id).some(k => hit.has(k.id)))));
+
+    if (tops.length === 0) {
       body.innerHTML = '<div class="empty-msg">該当する項目がありません。</div>';
       return;
     }
 
-    body.innerHTML = list.map(item =>
-      item.id === editingId ? editRow(item) : viewRow(item)
+    const row = i => i.id === editingId ? editRow(i) : viewRow(i);
+    body.innerHTML = tops.map(p =>
+      row(p) + sorted(childrenOf(p.id).filter(k => hit.has(k.id))).map(row).join('')
     ).join('');
   }
 
