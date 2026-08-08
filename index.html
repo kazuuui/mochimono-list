@@ -570,6 +570,29 @@
 
   .filter-label { font-size: 12px; font-weight: 700; color: var(--az-text); }
 
+  /* 子アイテムをまとめて隠す／出すトグル。並び替えの選択肢と区別したいので枠線を破線に */
+  .kids-btn {
+    font-size: 12px;
+    padding: 5px 12px;
+    border: 1px dashed var(--az-line-hi);
+    background: var(--az-card);
+    border-radius: 18px;
+    cursor: pointer;
+    color: var(--az-link);
+    font-family: inherit;
+    white-space: nowrap;
+    margin-left: auto;
+  }
+  .kids-btn:hover { background: var(--az-tint); border-color: var(--az-orange); color: var(--az-text); }
+  .kids-btn.on {
+    background: var(--az-navy);
+    border-color: var(--az-navy);
+    border-style: solid;
+    color: #fff;
+    font-weight: 700;
+  }
+  .kids-btn.on:hover { background: var(--az-navy); color: #fff; }
+
   .filter-btn, .sort-btn {
     font-size: 12px;
     padding: 5px 12px;
@@ -940,6 +963,7 @@
     <button class="sort-btn" id="sort-date" onclick="setSort('date')">購入日</button>
     <button class="sort-btn" id="sort-price" onclick="setSort('price')">金額</button>
     <span class="sort-hint">同じ項目をもう一度押すと昇順・降順が入れ替わります</span>
+    <button class="kids-btn" id="kids-btn" onclick="toggleHideChildren()"></button>
   </div>
 
   <div class="list-header">
@@ -1558,6 +1582,39 @@
     return items.filter(i => i.parentId === id);
   }
 
+  /* 子アイテムをまとめて隠す。畳んでも親のバッジ（1/3）は出したままにして、
+     隠れている中身の進み具合が分かるようにする。 */
+  const HIDE_KIDS_KEY = 'nb-hide-children';
+  let hideChildren = false;
+
+  function loadHideChildren() {
+    try { hideChildren = localStorage.getItem(HIDE_KIDS_KEY) === '1'; } catch (e) {}
+  }
+
+  function toggleHideChildren() {
+    hideChildren = !hideChildren;
+    try { localStorage.setItem(HIDE_KIDS_KEY, hideChildren ? '1' : '0'); } catch (e) {}
+    // 隠す側に切り替えたとき、編集中の子が消えてしまわないよう編集を閉じる
+    if (hideChildren && editingId) {
+      const it = items.find(i => i.id === editingId);
+      if (it && it.parentId) editingId = null;
+    }
+    render();
+  }
+
+  function updateKidsBtn() {
+    const btn = document.getElementById('kids-btn');
+    if (!btn) return;
+    const n = items.filter(i => i.parentId).length;
+    // 子がひとつも無いリストではボタン自体を出さない
+    btn.style.display = n ? '' : 'none';
+    btn.classList.toggle('on', hideChildren);
+    btn.textContent = hideChildren ? `子を表示（${n}）` : `子をまとめて隠す（${n}）`;
+    btn.title = hideChildren
+      ? '隠している子アイテムをすべて表示します'
+      : 'すべての子アイテムを隠して、親だけの一覧にします';
+  }
+
   function addChild(parentId) {
     const parent = items.find(i => i.id === parentId);
     if (!parent) return;
@@ -1829,6 +1886,7 @@
 
   function render() {
     applySortLabels();
+    updateKidsBtn();
     const body = document.getElementById('list-body');
     const hit = new Set(filtered().map(i => i.id));
 
@@ -1850,9 +1908,13 @@
     }
 
     const row = i => i.id === editingId ? editRow(i) : viewRow(i);
-    body.innerHTML = tops.map(p =>
-      row(p) + sorted(childrenOf(p.id).filter(k => hit.has(k.id))).map(row).join('')
-    ).join('');
+    body.innerHTML = tops.map(p => {
+      // 「子をまとめて隠す」中は親だけ。ただし編集中の子は消さない。
+      const kids = hideChildren
+        ? childrenOf(p.id).filter(k => k.id === editingId)
+        : sorted(childrenOf(p.id).filter(k => hit.has(k.id)));
+      return row(p) + kids.map(row).join('');
+    }).join('');
   }
 
   /* ---- リンクからの取り込み（#import=... ） ----
@@ -1902,6 +1964,7 @@
 
   importFromHash();
   loadSort();
+  loadHideChildren();
 
   // 前回開いていたリストを復元する（消えていればマイリストへ）
   let startList = DEFAULT_LIST;
