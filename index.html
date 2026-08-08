@@ -418,6 +418,10 @@
 
   .set-chips { display: flex; gap: 7px; flex-wrap: wrap; flex: 1; min-width: 0; }
 
+  /* フォルダを縦に積むので、リスト側は列方向の入れ物にする */
+  .set-tree { flex: 1; min-width: 0; }
+  .set-tree .set-chips { flex: none; }
+
   .set-btn {
     font-size: 12px;
     padding: 5px 12px;
@@ -478,6 +482,59 @@
   /* まだ開いていないテンプレは控えめに見せる */
   .set-btn.untouched { border-style: dashed; color: var(--az-sub); }
   .set-btn.untouched:hover { color: var(--az-text); }
+
+  /* ---- リストをまとめるフォルダ ----
+     フォルダは入れ物だけ。品目は今まで通り各リストが持つ。 */
+
+  .folder { margin-top: 9px; }
+
+  .folder-btn {
+    font-size: 12px;
+    padding: 5px 12px;
+    border: 1px solid var(--az-line);
+    border-right: none;
+    border-radius: 18px 0 0 18px;
+    background: var(--az-tint);
+    color: var(--az-text);
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+  }
+  .folder-btn:hover { border-color: var(--az-orange); }
+  .folder-arrow { color: var(--az-sub); font-size: 9px; }
+  .folder-count { color: var(--az-sub); font-size: 11px; font-weight: 400; }
+
+  /* 親子の関係が目で追えるよう、子は左に線を引いて下げる */
+  .folder-children {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+    margin: 7px 0 0 14px;
+    padding: 1px 0 1px 12px;
+    border-left: 2px solid var(--az-line);
+  }
+  .folder-empty { font-size: 11px; color: var(--az-sub); padding-top: 4px; }
+
+  .folder-pick {
+    font-size: 11px;
+    color: var(--az-sub);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .folder-pick select {
+    font-size: 12px;
+    padding: 4px 8px;
+    border: 1px solid var(--az-field-border);
+    border-radius: 6px;
+    background: var(--az-card);
+    color: var(--az-text);
+    font-family: inherit;
+  }
 
   .set-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 
@@ -800,11 +857,15 @@
   <div class="set-area">
     <div class="set-row">
       <span class="set-label">リスト</span>
-      <div class="set-chips" id="list-tabs"></div>
+      <div class="set-tree" id="list-tabs"></div>
     </div>
     <div class="set-actions">
       <button class="set-save-btn" onclick="duplicateList()">このリストを複製</button>
       <button class="set-new-btn" onclick="createList()">＋ 新しいリスト</button>
+      <button class="set-new-btn" onclick="createFolder()">＋ 新しいフォルダ</button>
+      <label class="folder-pick" id="folder-pick-wrap">フォルダ：
+        <select id="folder-pick" onchange="moveToFolder(this)"></select>
+      </label>
       <span class="set-hint" id="list-hint"></span>
     </div>
   </div>
@@ -1168,8 +1229,101 @@
     const lists = loadLists();
     delete lists[name];
     storeLists(lists);
+    // どのフォルダに入れていたかも一緒に忘れる
+    const parents = loadParents();
+    if (parents[name]) { delete parents[name]; storeParents(parents); }
     if (currentList === name) switchList(DEFAULT_LIST);
     else { renderSets(); render(); }
+  }
+
+  /* ---- リストをまとめるフォルダ ----
+     フォルダは入れ物の名前と開閉だけを覚える。品目は各リストが持ったまま。
+     マイリストは行き先を見失わないよう、フォルダには入れない。 */
+
+  const FOLDERS_KEY = 'nb-folders';
+  const PARENT_KEY  = 'nb-parent';
+
+  function loadFolders() {
+    try {
+      const a = JSON.parse(localStorage.getItem(FOLDERS_KEY) || '[]');
+      if (!Array.isArray(a)) return [];
+      return a
+        .filter(f => f && typeof f.name === 'string' && f.name !== '')
+        .map(f => ({ name: f.name, open: f.open !== false }));
+    } catch (e) { return []; }
+  }
+
+  function storeFolders(folders) {
+    try { localStorage.setItem(FOLDERS_KEY, JSON.stringify(folders)); }
+    catch (e) { alert('フォルダを保存できませんでした。'); }
+  }
+
+  // { リスト名: フォルダ名 }。入っていないリストは未分類。
+  function loadParents() {
+    try {
+      const o = JSON.parse(localStorage.getItem(PARENT_KEY) || '{}');
+      return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {};
+    } catch (e) { return {}; }
+  }
+
+  function storeParents(parents) {
+    try { localStorage.setItem(PARENT_KEY, JSON.stringify(parents)); }
+    catch (e) { alert('フォルダを保存できませんでした。'); }
+  }
+
+  function createFolder() {
+    const name = (prompt('新しいフォルダの名前を入力してください。\n例：旅行、アウトドア', '') || '').trim();
+    if (!name) return;
+    const folders = loadFolders();
+    if (folders.some(f => f.name === name)) {
+      alert(`フォルダ「${name}」はすでにあります。`);
+      return;
+    }
+    folders.push({ name, open: true });
+    storeFolders(folders);
+    renderSets();
+  }
+
+  function toggleFolder(name) {
+    const folders = loadFolders();
+    const f = folders.find(x => x.name === name);
+    if (!f) return;
+    f.open = !f.open;
+    storeFolders(folders);
+    renderSets();
+  }
+
+  function deleteFolder(name) {
+    if (!confirm(`フォルダ「${name}」を削除しますか？\n中のリストは消えません。未分類に戻ります。`)) return;
+    storeFolders(loadFolders().filter(f => f.name !== name));
+    const parents = loadParents();
+    Object.keys(parents).forEach(k => { if (parents[k] === name) delete parents[k]; });
+    storeParents(parents);
+    renderSets();
+  }
+
+  // 表示中のリストを、選んだフォルダへ移す
+  function moveToFolder(sel) {
+    const to = sel.value;
+    if (to === '__new__') {
+      const before = loadFolders().length;
+      createFolder();
+      const folders = loadFolders();
+      // 作れていたら、そのまま新しいフォルダへ入れる
+      if (folders.length > before) setParent(currentList, folders[folders.length - 1].name);
+      else renderSets();
+      return;
+    }
+    setParent(currentList, to);
+  }
+
+  function setParent(list, folder) {
+    if (list === DEFAULT_LIST) return;
+    const parents = loadParents();
+    if (folder) parents[list] = folder;
+    else delete parents[list];
+    storeParents(parents);
+    renderSets();
   }
 
   function loadItems() {
@@ -1368,7 +1522,7 @@
       return 0;
     };
 
-    document.getElementById('list-tabs').innerHTML = names.map(n => {
+    const chipHtml = n => {
       const j = JSON.stringify(n).replace(/"/g, '&quot;');
       const on = n === currentList;
       const c = count(n);
@@ -1381,7 +1535,57 @@
       return (n === DEFAULT_LIST || untouched)
         ? chip
         : `<span class="fav-chip">${chip}<button class="fav-del" onclick="deleteList(${j})" title="削除">✕</button></span>`;
+    };
+
+    const folders = loadFolders();
+    const parents = loadParents();
+    const folderNames = folders.map(f => f.name);
+    // フォルダを消したあとに残った指定は、未分類として扱う
+    const parentOf = n =>
+      (n !== DEFAULT_LIST && folderNames.includes(parents[n])) ? parents[n] : null;
+
+    let html = `<div class="set-chips">`
+      + names.filter(n => !parentOf(n)).map(chipHtml).join('')
+      + `</div>`;
+
+    html += folders.map(f => {
+      const j = JSON.stringify(f.name).replace(/"/g, '&quot;');
+      const kids = names.filter(n => parentOf(n) === f.name);
+      const head = `<span class="fav-chip">`
+        + `<button class="folder-btn" onclick="toggleFolder(${j})" `
+        + `aria-expanded="${f.open}" title="${f.open ? '折りたたむ' : '開く'}">`
+        + `<span class="folder-arrow">${f.open ? '▼' : '▶'}</span>`
+        + `📁 ${esc(f.name)}<span class="folder-count"> ${kids.length}</span></button>`
+        + `<button class="fav-del" onclick="deleteFolder(${j})" title="フォルダを削除">✕</button>`
+        + `</span>`;
+      const body = f.open
+        ? `<div class="folder-children">`
+          + (kids.length
+              ? kids.map(chipHtml).join('')
+              : `<span class="folder-empty">空です。リストを開いて「フォルダ」から移せます。</span>`)
+          + `</div>`
+        : '';
+      return `<div class="folder">${head}${body}</div>`;
     }).join('');
+
+    document.getElementById('list-tabs').innerHTML = html;
+
+    // 表示中のリストをどのフォルダに入れるか選ぶ欄
+    const wrap = document.getElementById('folder-pick-wrap');
+    const pick = document.getElementById('folder-pick');
+    if (currentList === DEFAULT_LIST) {
+      // マイリストはフォルダに入れない
+      wrap.style.display = 'none';
+    } else {
+      wrap.style.display = '';
+      const now = parentOf(currentList) || '';
+      pick.innerHTML = `<option value="">未分類</option>`
+        + folders.map(f => {
+            const v = esc(f.name);
+            return `<option value="${v}"${f.name === now ? ' selected' : ''}>${v}</option>`;
+          }).join('')
+        + `<option value="__new__">＋ 新しいフォルダ…</option>`;
+    }
 
     document.getElementById('list-hint').textContent =
       currentList === DEFAULT_LIST
